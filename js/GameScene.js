@@ -1,5 +1,5 @@
 import { BG, TILE, MUTED } from './config.js';
-import { N, txt, rect, glyph, session, rand, saveHistory } from './gameHelpers.js';
+import { N, txt, rect, button, glyph, session, rand, saveHistory } from './gameHelpers.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -50,6 +50,8 @@ export default class GameScene extends Phaser.Scene {
     const x0 = 61;
     const y0 = 598;
 
+    const debugMarkers = [];
+
     q.options.forEach((option, j) => {
       const x = x0 + j * slot;
 
@@ -57,11 +59,30 @@ export default class GameScene extends Phaser.Scene {
       glyph(this, x + w / 2, y0 + 46, option, 0.9);
       txt(this, x + w / 2, y0 + 93, String(j + 1), 17, MUTED);
 
+      if (j === q.correct) {
+        const outline = this.add.graphics();
+        outline.lineStyle(3, 0x72e6a1);
+        outline.strokeRoundedRect(x, y0, w, h, 10);
+        const label = txt(this, x + w / 2, y0 + 15, 'CORRECT', 13, '#72e6a1');
+        debugMarkers.push(outline, label);
+      }
+
       this.add
         .zone(x + w / 2, y0 + h / 2, w, h)
         .setInteractive({ useHandCursor: true })
         .on('pointerdown', () => this.choose(j));
     });
+
+    const updateDebug = () => {
+      const enabled = this.registry.get('debugAnswers') === true;
+      debugToggle.t.setText(`Debug answers: ${enabled ? 'ON' : 'OFF'}`);
+      debugMarkers.forEach(marker => marker.setVisible(enabled));
+    };
+    const debugToggle = button(this, 780, 20, 200, 42, '', () => {
+      this.registry.set('debugAnswers', this.registry.get('debugAnswers') !== true);
+      updateDebug();
+    }, 17);
+    updateDebug();
 
     this.input.keyboard.on('keydown', e => {
       const j = Number(e.key) - 1;
